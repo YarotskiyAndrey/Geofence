@@ -3,7 +3,6 @@ package com.example.test.geofenceapp
 import android.app.IntentService
 import android.content.Intent
 import android.util.Log
-import android.widget.Toast
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
 import com.google.android.gms.location.sample.geofencing.GeofenceErrorMessages
@@ -36,7 +35,8 @@ class GeofenceTransitionsIntentService : IntentService("GeofenceTransitionsInten
 
         // Test that the reported transition was of interest.
         if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||
-                geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
+            geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT ||
+            geofenceTransition == Geofence.GEOFENCE_TRANSITION_DWELL) {
 
             // Get the geofences that were triggered. A single event can trigger
             // multiple geofences.

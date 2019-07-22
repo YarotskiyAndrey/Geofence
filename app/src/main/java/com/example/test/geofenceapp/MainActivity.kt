@@ -17,6 +17,7 @@ import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_main.*
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity() {
@@ -28,60 +29,32 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
 
+        geofencingClient = LocationServices.getGeofencingClient(this)
         fab.setOnClickListener { view ->
             val myLocation: Location? = getLastKnownLocation()
             val text = myLocation.let { myLocation.toString() }
 
             Snackbar.make(view, text, Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show()
-        }
 
-
-        geofenceList.add(
-            Geofence.Builder()
-                // Set the request ID of the geofence. This is a string to identify this
-                // geofence.
-                .setRequestId("RequestId")
-                // Set the circular region of this geofence.
-                .setCircularRegion(
-                    location.latitude,
-                    location.longitude, 100f
-                )
-                // Set the expiration duration of the geofence. This geofence gets automatically
-                // removed after this period of time.
-                .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                // Set the transition types of interest. Alerts are only generated for these
-                // transition. We track entry and exit transitions in this sample.
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
-                // Create the geofence.
-                .build()
-        )
-        geofencingClient = LocationServices.getGeofencingClient(this)
-
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                RECORD_REQUEST_CODE
-            )
-        } else {
-            geofencingClient.addGeofences(getGeofencingRequest(), geofencePendingIntent)?.run {
+            geofencingClient.removeGeofences(geofencePendingIntent)?.run {
                 addOnSuccessListener {
                     // Geofences added
-                    val toast = Toast.makeText(this@MainActivity, "Geofences added", Toast.LENGTH_LONG)
+                    val toast = Toast.makeText(this@MainActivity, "Geofences Removed", Toast.LENGTH_LONG)
                     toast.show()
                 }
                 addOnFailureListener {
                     // Failed to add geofences
-                    val toast = Toast.makeText(this@MainActivity, "Failed to add geofences\n $it", Toast.LENGTH_LONG)
+                    val toast = Toast.makeText(this@MainActivity, "Failed to Remove geofences\n $it", Toast.LENGTH_LONG)
                     toast.show()
                 }
             }
         }
+
+
+        geofenceList.add(simpleGeofence(location, 400f))
+        geofenceList.add(simpleGeofence(location, 100f))
+        setGeofences()
     }
 
     private var geofenceList: ArrayList<Geofence> = ArrayList()
@@ -125,4 +98,54 @@ class MainActivity : AppCompatActivity() {
         return bestLocation
     }
 
+    private fun setGeofences() {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                RECORD_REQUEST_CODE
+            )
+        } else {
+            geofencingClient.addGeofences(getGeofencingRequest(), geofencePendingIntent)?.run {
+                addOnSuccessListener {
+                    // Geofences added
+                    val toast = Toast.makeText(this@MainActivity, "Geofences added", Toast.LENGTH_LONG)
+                    toast.show()
+                }
+                addOnFailureListener {
+                    // Failed to add geofences
+                    val toast = Toast.makeText(this@MainActivity, "Failed to add geofences\n $it", Toast.LENGTH_LONG)
+                    toast.show()
+                }
+            }
+        }
+    }
+
+    private fun simpleGeofence(location: Location, radius: Float): Geofence {
+        return Geofence.Builder()
+            // Set the request ID of the geofence. This is a string to identify this
+            // geofence.
+            .setRequestId("RequestId.Rad_$radius")
+            // Set the circular region of this geofence.
+            .setCircularRegion(
+                location.latitude,
+                location.longitude,
+                radius
+            )
+            // Set the expiration duration of the geofence. This geofence gets automatically
+            // removed after this period of time.
+            .setExpirationDuration(Geofence.NEVER_EXPIRE)
+            // Set the transition types of interest. Alerts are only generated for these
+            // transition. We track entry and exit transitions in this sample.
+            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT or Geofence.GEOFENCE_TRANSITION_DWELL)
+            // Set the delay between GEOFENCE_TRANSITION_ENTER and GEOFENCE_TRANSITION_DWELLING in milliseconds
+            .setLoiteringDelay(TimeUnit.SECONDS.toMillis(2).toInt())
+            // Create the geofence.
+            .build()
+
+    }
 }
