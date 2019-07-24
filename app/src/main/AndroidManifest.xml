@@ -23,6 +23,7 @@
                 android:name=".GeofenceTransitionsIntentService"
                 android:exported="false">
         </service>
+        <receiver android:name=".GeofenceBroadcastReceiver"/>
     </application>
 
 </manifest>
